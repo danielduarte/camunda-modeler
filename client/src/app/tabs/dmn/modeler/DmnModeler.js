@@ -62,7 +62,15 @@ export default class CamundaDmnModeler extends DmnModeler {
         propertiesPanelKeyboardBindingsModule
       ]),
       decisionTable: mergeModules(decisionTable, [
-        decisionTableKeyboardModule
+        decisionTableKeyboardModule,
+        {
+          viewDrd: NOOP_MODULE
+        }
+      ]),
+      literalExpression: mergeModules(literalExpression, [
+        {
+          viewDrd: NOOP_MODULE
+        }
       ]),
       moddleExtensions: {
         camunda: camundaModdleDescriptor,
@@ -135,3 +143,5 @@ function mergeModules(editorConfig = {}, additionalModules) {
     ]
   };
 }
+
+const NOOP_MODULE = [ 'value', null ];
