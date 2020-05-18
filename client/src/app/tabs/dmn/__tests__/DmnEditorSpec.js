@@ -827,6 +827,84 @@ describe('<DmnEditor>', function() {
 
   describe('layout', function() {
 
+    it('should open overview', async function() {
+
+      // given
+      let layout = {
+        dmnOverview: {
+          open: false
+        }
+      };
+
+      function onLayoutChanged(newLayout) {
+        layout = newLayout;
+      }
+
+      const {
+        instance,
+        wrapper
+      } = await renderEditor(diagramXML, {
+        layout,
+        onLayoutChanged
+      });
+
+      const modeler = instance.getModeler();
+
+      modeler.open({ type: 'decisionTable' });
+
+      instance.handleChanged();
+
+      wrapper.update();
+
+      const toggle = wrapper.find('#button-toggle-overview');
+
+      // when
+      toggle.simulate('click');
+
+      // then
+      expect(layout.dmnOverview.open).to.be.true;
+    });
+
+
+    it('should close overview', async function() {
+
+      // given
+      let layout = {
+        dmnOverview: {
+          open: true
+        }
+      };
+
+      function onLayoutChanged(newLayout) {
+        layout = newLayout;
+      }
+
+      const {
+        instance,
+        wrapper
+      } = await renderEditor(diagramXML, {
+        layout,
+        onLayoutChanged
+      });
+
+      const modeler = instance.getModeler();
+
+      modeler.open({ type: 'decisionTable' });
+
+      instance.handleChanged();
+
+      wrapper.update();
+
+      const toggle = wrapper.find('#button-toggle-overview');
+
+      // when
+      toggle.simulate('click');
+
+      // then
+      expect(layout.dmnOverview.open).to.be.false;
+    });
+
+
     it('should open properties panel', async function() {
 
       // given

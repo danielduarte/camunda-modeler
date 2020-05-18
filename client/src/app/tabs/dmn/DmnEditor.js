@@ -15,6 +15,8 @@ import {
   isFunction
 } from 'min-dash';
 
+import classNames from 'classnames';
+
 import { Fill } from '../../slot-fill';
 
 import {
@@ -34,6 +36,8 @@ import {
   WithCachedState,
   CachedComponent
 } from '../../cached';
+
+import OverviewContainer from './OverviewContainer';
 
 import PropertiesContainer from '../PropertiesContainer';
 
@@ -59,6 +63,8 @@ import { findUsages as findNamespaceUsages } from '../util/namespace';
 
 import { migrateDiagram } from '@bpmn-io/dmn-migrate';
 
+import { DEFAULT_LAYOUT as overviewDefaultLayout } from './OverviewContainer';
+
 const EXPORT_AS = [ 'png', 'jpeg', 'svg' ];
 
 const NAMESPACE_URL_DMN11 = 'http://www.omg.org/spec/DMN/20151101/dmn.xsd',
@@ -75,6 +81,7 @@ export class DmnEditor extends CachedComponent {
     this.state = { };
 
     this.ref = React.createRef();
+    this.overviewRef = React.createRef();
     this.propertiesPanelRef = React.createRef();
 
     this.handleResize = debounce(this.handleResize);
@@ -98,6 +105,11 @@ export class DmnEditor extends CachedComponent {
 
       if (propertiesPanel) {
         propertiesPanel.attachTo(this.propertiesPanelRef.current);
+      }
+
+      // attach overview
+      if (this.overviewRef.current) {
+        modeler.attachOverviewTo(this.overviewRef.current);
       }
     }
 
@@ -240,6 +252,13 @@ export class DmnEditor extends CachedComponent {
       if (propertiesPanel) {
         propertiesPanel.attachTo(this.propertiesPanelRef.current);
       }
+    }
+
+    // attach overview
+    if (this.overviewRef.current) {
+      modeler.attachOverviewTo(this.overviewRef.current);
+    } else {
+      modeler.detachOverview();
     }
 
     // must be called last
@@ -712,6 +731,32 @@ export class DmnEditor extends CachedComponent {
     });
   }
 
+  handleEditDrdClick = () => {
+    const modeler = this.getModeler();
+
+    const drdView = modeler._views.find(({ type }) => type === 'drd');
+
+    if (drdView) {
+      modeler.open(drdView);
+    }
+  }
+
+  handleToggleOverviewClick = () => {
+    const {
+      layout,
+      onLayoutChanged
+    } = this.props;
+
+    const dmnOverview = layout.dmnOverview || overviewDefaultLayout;
+
+    onLayoutChanged({
+      dmnOverview: {
+        ...dmnOverview,
+        open: !dmnOverview.open
+      }
+    });
+  }
+
   render() {
     const {
       layout,
@@ -728,9 +773,13 @@ export class DmnEditor extends CachedComponent {
 
     const activeView = modeler.getActiveView();
 
-    const hideIfCollapsed = activeView && activeView.type !== 'drd';
+    const isDrd = activeView && activeView.type === 'drd';
 
     const activeViewer = modeler.getActiveViewer();
+
+    const { dmnOverview } = layout;
+
+    const isOverviewOpen = !dmnOverview || dmnOverview.open;
 
     const hasPropertiesPanel = !importing && activeViewer && !!activeViewer.get('propertiesPanel', false);
 
@@ -799,18 +848,46 @@ export class DmnEditor extends CachedComponent {
             <Icon name="distribute-vertical-tool" />
           </Button>
         </Fill>
-        <div className="diagram" ref={ this.ref }></div>
 
         {
-          hasPropertiesPanel && (
-            <PropertiesContainer
-              className="properties"
-              layout={ layout }
-              ref={ this.propertiesPanelRef }
-              hideIfCollapsed={ hideIfCollapsed }
-              onLayoutChanged={ onLayoutChanged } />
+          !isDrd && (
+            <div className="top">
+              <button id="button-edit-drd" className="button" onClick={ this.handleEditDrdClick }>Edit DRD</button>
+              <button id="button-toggle-overview" className="button" onClick={ this.handleToggleOverviewClick }>{ isOverviewOpen ? 'Close' : 'Open' } Overview</button>
+            </div>
           )
         }
+
+        <div className="bottom">
+
+          {
+            !isDrd && (
+              <OverviewContainer
+                className="overview"
+                layout={ layout }
+                ref={ this.overviewRef }
+                onLayoutChanged={ onLayoutChanged } />
+            )
+          }
+
+          <div className={
+            classNames(
+              'diagram',
+              { 'drd': isDrd }
+            )
+          } ref={ this.ref }></div>
+
+          {
+            hasPropertiesPanel && (
+              <PropertiesContainer
+                className="properties"
+                layout={ layout }
+                ref={ this.propertiesPanelRef }
+                onLayoutChanged={ onLayoutChanged } />
+            )
+          }
+
+        </div>
 
       </div>
     );
