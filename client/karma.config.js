@@ -110,8 +110,32 @@ module.exports = function(karma) {
                 use: 'react-svg-loader'
               },
               {
-                test: /\.(css|bpmn|cmmn|dmn|less|xml|png|svg)$/,
+                test: /\.(bpmn|cmmn|dmn)$/,
                 use: 'raw-loader'
+              },
+              {
+                test: /\.css$/,
+                use: [
+                  'style-loader',
+                  cssLoader()
+                ]
+              },
+              {
+                test: /\.less$/,
+                use: [
+                  'style-loader',
+                  cssLoader(),
+                  'less-loader'
+                ]
+              },
+              {
+
+                // exclude files served otherwise
+                exclude: [/\.(js|jsx|mjs)$/, /\.html$/, /\.json$/],
+                loader: 'file-loader',
+                options: {
+                  name: 'static/media/[name].[hash:8].[ext]',
+                }
               }
             ]
           }
@@ -138,10 +162,10 @@ module.exports = function(karma) {
           resourcePath
         ],
         alias: {
-          'bpmn-js/lib/Modeler': 'test/mocks/bpmn-js/Modeler',
-          'cmmn-js/lib/Modeler': 'test/mocks/cmmn-js/Modeler',
-          'dmn-js/lib/Modeler': 'test/mocks/dmn-js/Modeler',
-          './DmnModeler': 'test/mocks/dmn-js/Modeler',
+          'bpmn-js/lib/Modeler': process.env.modelers ? 'bpmn-js/lib/Modeler' : 'test/mocks/bpmn-js/Modeler',
+          'cmmn-js/lib/Modeler': process.env.modelers ? 'cmmn-js/lib/Modeler' : 'test/mocks/cmmn-js/Modeler',
+          'dmn-js/lib/Modeler': process.env.modelers ? 'dmn-js/lib/Modeler' : 'test/mocks/dmn-js/Modeler',
+          './DmnModeler': process.env.modelers ? './DmnModeler' : 'test/mocks/dmn-js/Modeler',
           './CodeMirror': 'test/mocks/code-mirror/CodeMirror',
           'sourcemapped-stacktrace': 'test/mocks/sourcemapped-stacktrace'
         }
@@ -149,3 +173,14 @@ module.exports = function(karma) {
     }
   });
 };
+
+// helpers //////////
+
+function cssLoader() {
+  return {
+    loader: 'css-loader',
+    options: {
+      localIdentName: '[path][name]__[local]--[hash:base64:5]'
+    }
+  };
+}
