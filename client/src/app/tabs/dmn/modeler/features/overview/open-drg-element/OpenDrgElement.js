@@ -17,7 +17,7 @@ const CAN_OPEN_DRG_ELEMENT_MARKER = 'can-open',
 
 
 export default class OpenDrgElement {
-  constructor(canvas, elementRegistry, eventBus) {
+  constructor(canvas, config, elementRegistry, eventBus) {
     this._canvas = canvas;
 
     let currentOpenDrgElementId;
@@ -34,6 +34,31 @@ export default class OpenDrgElement {
 
         if (currentOpenDrgElement) {
           canvas.addMarker(currentOpenDrgElement, CURRENT_OPEN_DRG_ELEMENT_MARKER);
+        }
+      }
+    });
+
+    // keep track of overview open state
+    const { layout } = config;
+
+    let overviewOpen = layout.dmnOverview ? layout.dmnOverview.open : false;
+
+    eventBus.on('layoutChanged', ({ layout }) => {
+      if (layout.dmnOverview) {
+        const isOverviewOpenChange = overviewOpen !== layout.dmnOverview.open;
+
+        overviewOpen = layout.dmnOverview.open;
+
+        if (!isOverviewOpenChange) {
+          return;
+        }
+      }
+
+      if (overviewOpen && currentOpenDrgElementId) {
+        const currentOpenDrgElement = elementRegistry.get(currentOpenDrgElementId);
+
+        if (currentOpenDrgElement) {
+          this.centerViewbox(currentOpenDrgElement);
         }
       }
     });
@@ -63,7 +88,9 @@ export default class OpenDrgElement {
 
           // (3) center viewbox around it once overview is open
           eventBus.once('attachOverview', () => {
-            this.centerViewbox(currentOpenDrgElement);
+            if (overviewOpen) {
+              this.centerViewbox(currentOpenDrgElement);
+            }
           });
         }
       }
@@ -111,6 +138,7 @@ export default class OpenDrgElement {
 
 OpenDrgElement.$inject = [
   'canvas',
+  'config.openDrgElement',
   'elementRegistry',
   'eventBus'
 ];

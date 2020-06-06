@@ -129,6 +129,16 @@ export class DmnEditor extends CachedComponent {
   componentDidUpdate(prevProps) {
     this.checkImport(prevProps);
 
+    // We can only notify interested parties about layout changes once these changes have been
+    // rendered
+    if (!jsonEqual(this.props.layout, prevProps.layout)) {
+      const modeler = this.getModeler();
+
+      modeler._emit('layoutChanged', {
+        layout: this.props.layout
+      });
+    }
+
     if (isCachedStateChange(prevProps, this.props)) {
       this.handleChanged();
     }
@@ -901,6 +911,7 @@ export class DmnEditor extends CachedComponent {
 
     const {
       getPlugins,
+      layout,
       onAction,
       onError
     } = props;
@@ -923,6 +934,9 @@ export class DmnEditor extends CachedComponent {
         name,
         version
       },
+      overview: {
+        layout
+      }
     }, handleMiddlewareExtensions);
 
     if (warnings.length && isFunction(onError)) {
@@ -985,4 +999,8 @@ function getMigrationDialog() {
     checkboxChecked: true,
     checkboxLabel: 'Do not ask again.'
   };
+}
+
+function jsonEqual(a, b) {
+  return JSON.stringify(a) !== JSON.stringify(b);
 }

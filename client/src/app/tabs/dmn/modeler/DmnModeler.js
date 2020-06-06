@@ -59,6 +59,7 @@ export default class CamundaDmnModeler extends DmnModeler {
       decisionTable,
       literalExpression,
       exporter,
+      overview,
       ...otherOptions
     } = options;
 
@@ -113,7 +114,7 @@ export default class CamundaDmnModeler extends DmnModeler {
 
     addExporter(exporter, this);
 
-    this._addOverview();
+    this._addOverview(overview);
   }
 
   /**
@@ -137,13 +138,16 @@ export default class CamundaDmnModeler extends DmnModeler {
     return commandStack._stackIdx;
   }
 
-  _addOverview() {
+  _addOverview({ layout }) {
     const overview = this._overview = new DrdViewer({
       drd: {
         additionalModules: [
           openDrgElementModule,
           overviewRendererModule
-        ]
+        ],
+        openDrgElement: {
+          layout
+        }
       }
     });
 
@@ -228,6 +232,12 @@ export default class CamundaDmnModeler extends DmnModeler {
           });
         }
       }
+    });
+
+    this.on('layoutChanged', ({ layout }) => {
+      const activeViewer = this._overview.getActiveViewer();
+
+      activeViewer.get('eventBus').fire('layoutChanged', { layout });
     });
 
     overview.once('import.done', () => {
